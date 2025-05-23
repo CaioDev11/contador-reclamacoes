@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Votação de MVP</title>
+  <title>Votação de MVP por Grupos</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -45,46 +45,95 @@
       font-size: 20px;
       color: #333;
     }
+    #grupoLogin {
+      margin-bottom: 30px;
+      background: #fff;
+      padding: 20px;
+      display: inline-block;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
 
-  <h1>Votação de MVP</h1>
+  <h1>Votação de MVP por Grupos</h1>
 
-  <input type="text" id="nomeJogador" placeholder="Nome do jogador">
-  <button onclick="adicionarJogador()">Adicionar Jogador</button>
+  <div id="grupoLogin">
+    <input type="text" id="grupoNome" placeholder="Nome do Grupo">
+    <input type="password" id="grupoSenha" placeholder="Senha">
+    <button onclick="entrarGrupo()">Entrar / Criar Grupo</button>
+  </div>
 
-  <div id="listaJogadores"></div>
+  <div id="conteudoGrupo" style="display:none;">
+    <h2 id="tituloGrupo"></h2>
 
-  <div id="mvpAtual">Nenhum MVP ainda</div>
+    <input type="text" id="nomeJogador" placeholder="Nome do jogador">
+    <button onclick="adicionarJogador()">Adicionar Jogador</button>
+
+    <div id="listaJogadores"></div>
+    <div id="mvpAtual">Nenhum MVP ainda</div>
+  </div>
 
   <script>
-    let jogadores = JSON.parse(localStorage.getItem('jogadores')) || {};
-    let votoUsuario = localStorage.getItem('votoUsuario'); // nome do jogador votado
+    let grupoAtual = null;
+    let dados = JSON.parse(localStorage.getItem('dadosVotacao')) || {};
+    let votosUsuario = JSON.parse(localStorage.getItem('votosUsuario')) || {};
 
-    function salvarDados() {
-      localStorage.setItem('jogadores', JSON.stringify(jogadores));
+    function salvarTudo() {
+      localStorage.setItem('dadosVotacao', JSON.stringify(dados));
+      localStorage.setItem('votosUsuario', JSON.stringify(votosUsuario));
+    }
+
+    function entrarGrupo() {
+      const nome = document.getElementById('grupoNome').value.trim();
+      const senha = document.getElementById('grupoSenha').value.trim();
+
+      if (!nome || !senha) {
+        alert("Preencha nome e senha do grupo.");
+        return;
+      }
+
+      if (!dados[nome]) {
+        // cria novo grupo
+        dados[nome] = {
+          senha: senha,
+          jogadores: {}
+        };
+      } else if (dados[nome].senha !== senha) {
+        alert("Senha incorreta para o grupo.");
+        return;
+      }
+
+      grupoAtual = nome;
+      document.getElementById('grupoLogin').style.display = 'none';
+      document.getElementById('conteudoGrupo').style.display = 'block';
+      document.getElementById('tituloGrupo').textContent = `Grupo: ${grupoAtual}`;
+      atualizarLista();
     }
 
     function adicionarJogador() {
       const nome = document.getElementById('nomeJogador').value.trim();
-      if (nome && !jogadores[nome]) {
-        jogadores[nome] = 0;
-        salvarDados();
+      if (!nome) return;
+
+      const grupo = dados[grupoAtual];
+      if (!grupo.jogadores[nome]) {
+        grupo.jogadores[nome] = 0;
+        salvarTudo();
         atualizarLista();
         document.getElementById('nomeJogador').value = '';
       }
     }
 
     function votar(nome) {
-      if (votoUsuario) {
-        alert('Você já votou!');
+      if (votosUsuario[grupoAtual]) {
+        alert("Você já votou neste grupo!");
         return;
       }
-      jogadores[nome]++;
-      votoUsuario = nome;
-      localStorage.setItem('votoUsuario', nome);
-      salvarDados();
+
+      dados[grupoAtual].jogadores[nome]++;
+      votosUsuario[grupoAtual] = nome;
+      salvarTudo();
       atualizarLista();
     }
 
@@ -92,6 +141,7 @@
       const container = document.getElementById('listaJogadores');
       container.innerHTML = '';
 
+      const jogadores = dados[grupoAtual].jogadores;
       let mvp = '';
       let maxVotos = -1;
 
@@ -99,12 +149,13 @@
         const votos = jogadores[nome];
         const div = document.createElement('div');
         div.className = 'jogador';
+        const votado = votosUsuario[grupoAtual];
         div.innerHTML = `
           <strong>${nome}</strong><br>
           ${votos} voto${votos !== 1 ? 's' : ''}
           <br>
-          <button onclick="votar('${nome}')" ${votoUsuario ? 'disabled' : ''}>
-            ${votoUsuario === nome ? 'Você votou aqui' : votoUsuario ? 'Votar' : 'Votar'}
+          <button onclick="votar('${nome}')" ${votado ? 'disabled' : ''}>
+            ${votado === nome ? 'Você votou aqui' : votado ? 'Voto já feito' : 'Votar'}
           </button>
         `;
         container.appendChild(div);
@@ -115,17 +166,11 @@
         }
       }
 
-      if (mvp) {
-        document.getElementById('mvpAtual').textContent =
-          `MVP atual: ${mvp} com ${maxVotos} voto${maxVotos !== 1 ? 's' : ''}`;
-      } else {
-        document.getElementById('mvpAtual').textContent = 'Nenhum MVP ainda';
-      }
+      document.getElementById('mvpAtual').textContent = mvp
+        ? `MVP do grupo: ${mvp} com ${maxVotos} voto${maxVotos !== 1 ? 's' : ''}`
+        : 'Nenhum MVP ainda';
     }
-
-    atualizarLista();
   </script>
 
 </body>
 </html>
-
