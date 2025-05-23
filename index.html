@@ -5,21 +5,45 @@
   <title>Votação de MVP</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       padding: 40px;
       text-align: center;
+      background-color: #f0f2f5;
+    }
+    h1 {
+      margin-bottom: 20px;
     }
     input, button {
       font-size: 16px;
-      padding: 5px;
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+    input {
+      width: 200px;
+    }
+    button {
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #0056b3;
     }
     .jogador {
-      margin: 10px 0;
+      background-color: #fff;
+      margin: 10px auto;
+      padding: 10px;
+      border-radius: 8px;
+      width: 300px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     #mvpAtual {
       margin-top: 30px;
       font-weight: bold;
       font-size: 20px;
+      color: #333;
     }
   </style>
 </head>
@@ -35,19 +59,32 @@
   <div id="mvpAtual">Nenhum MVP ainda</div>
 
   <script>
-    const jogadores = {};
+    let jogadores = JSON.parse(localStorage.getItem('jogadores')) || {};
+    let votosUsuario = JSON.parse(localStorage.getItem('votosUsuario')) || [];
+
+    function salvarDados() {
+      localStorage.setItem('jogadores', JSON.stringify(jogadores));
+      localStorage.setItem('votosUsuario', JSON.stringify(votosUsuario));
+    }
 
     function adicionarJogador() {
       const nome = document.getElementById('nomeJogador').value.trim();
       if (nome && !jogadores[nome]) {
         jogadores[nome] = 0;
+        salvarDados();
         atualizarLista();
         document.getElementById('nomeJogador').value = '';
       }
     }
 
     function votar(nome) {
+      if (votosUsuario.includes(nome)) {
+        alert('Você já votou neste jogador!');
+        return;
+      }
       jogadores[nome]++;
+      votosUsuario.push(nome);
+      salvarDados();
       atualizarLista();
     }
 
@@ -62,9 +99,14 @@
         const votos = jogadores[nome];
         const div = document.createElement('div');
         div.className = 'jogador';
+        const jaVotou = votosUsuario.includes(nome);
         div.innerHTML = `
-          ${nome} - ${votos} voto${votos !== 1 ? 's' : ''}
-          <button onclick="votar('${nome}')">Votar</button>
+          <strong>${nome}</strong><br>
+          ${votos} voto${votos !== 1 ? 's' : ''}
+          <br>
+          <button onclick="votar('${nome}')" ${jaVotou ? 'disabled' : ''}>
+            ${jaVotou ? 'Voto registrado' : 'Votar'}
+          </button>
         `;
         container.appendChild(div);
 
@@ -81,6 +123,8 @@
         document.getElementById('mvpAtual').textContent = 'Nenhum MVP ainda';
       }
     }
+
+    atualizarLista();
   </script>
 
 </body>
