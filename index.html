@@ -2,80 +2,90 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contador de Reclamações</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
+      background-color: #121212;
+      color: #f0f0f0;
+      text-align: center;
+      padding-top: 50px;
     }
-    h1 {
-      margin-bottom: 20px;
-    }
-    #contador {
-      font-size: 48px;
-      margin: 20px 0;
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 5px;
+      border: none;
     }
     button {
-      padding: 15px 30px;
-      font-size: 20px;
-      cursor: pointer;
-      background-color: #ff5555;
+      background-color: #4CAF50;
       color: white;
-      border: none;
-      border-radius: 8px;
-      transition: background-color 0.3s;
+      cursor: pointer;
     }
     button:hover {
-      background-color: #ff0000;
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
 
   <h1>Contador de Reclamações</h1>
-  <div id="contador">0</div>
-  <button onclick="reclamar()">Reclamar</button>
+
+  <label for="nomeEncrenqueiro">Nome do encrenqueiro:</label>
+  <input type="text" id="nomeEncrenqueiro" placeholder="Digite o nome...">
+  <br>
+
+  <button id="reclamarBtn" disabled>Reclamar</button>
+
+  <h2 id="statusReclamacao"></h2>
 
   <script>
-    const contadorElemento = document.getElementById('contador');
+    const nomeInput = document.getElementById('nomeEncrenqueiro');
+    const reclamarBtn = document.getElementById('reclamarBtn');
+    const statusReclamacao = document.getElementById('statusReclamacao');
 
-    function getHoje() {
-      const hoje = new Date();
-      return hoje.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-    }
+    let nome = '';
+    let contador = 0;
+    const hoje = new Date().toLocaleDateString();
 
-    function carregarContador() {
-      const dataSalva = localStorage.getItem('dataReclamacao');
-      const hoje = getHoje();
-
-      if (dataSalva !== hoje) {
-        localStorage.setItem('dataReclamacao', hoje);
-        localStorage.setItem('contadorReclamacao', '0');
+    // Checar se já tem dados no localStorage
+    if (localStorage.getItem('data') === hoje) {
+      contador = parseInt(localStorage.getItem('contador')) || 0;
+      nome = localStorage.getItem('nome') || '';
+      nomeInput.value = nome;
+      if (nome) {
+        reclamarBtn.disabled = false;
+        atualizarStatus();
       }
-
-      return parseInt(localStorage.getItem('contadorReclamacao')) || 0;
+    } else {
+      localStorage.setItem('data', hoje);
+      localStorage.setItem('contador', 0);
     }
 
-    function atualizarContador(valor) {
-      contadorElemento.textContent = valor;
-    }
+    nomeInput.addEventListener('input', function() {
+      nome = nomeInput.value.trim();
+      localStorage.setItem('nome', nome);
+      reclamarBtn.disabled = nome === '';
+      atualizarStatus();
+    });
 
-    function reclamar() {
-      let contador = carregarContador();
-      contador += 1;
-      localStorage.setItem('contadorReclamacao', contador);
-      atualizarContador(contador);
-    }
+    reclamarBtn.addEventListener('click', function() {
+      contador++;
+      localStorage.setItem('contador', contador);
+      atualizarStatus();
+    });
 
-    // Inicialização
-    atualizarContador(carregarContador());
+    function atualizarStatus() {
+      if (nome) {
+        statusReclamacao.textContent = `${nome} já reclamou ${contador} vez(es) hoje!`;
+      } else {
+        statusReclamacao.textContent = '';
+      }
+    }
   </script>
 
 </body>
 </html>
+
