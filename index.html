@@ -1,66 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>Contador de Reclamações</title>
+  <meta charset="UTF-8">
+  <title>Votação de MVP</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       padding: 40px;
+      text-align: center;
     }
-    #contador {
-      font-size: 24px;
-      margin-top: 20px;
-    }
-    #nomeInput {
-      font-size: 18px;
+    input, button {
+      font-size: 16px;
       padding: 5px;
     }
-    #confirmarNome {
-      margin-left: 10px;
-      padding: 5px 10px;
+    .jogador {
+      margin: 10px 0;
+    }
+    #mvpAtual {
+      margin-top: 30px;
+      font-weight: bold;
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Nome do Reclamão</h1>
-  <input type="text" id="nomeInput" placeholder="Digite o nome aqui">
-  <button id="confirmarNome">Confirmar</button>
+  <h1>Votação de MVP</h1>
 
-  <div id="areaReclamacoes" style="display:none;">
-    <p id="contador">Já reclamou 0 vezes hoje</p>
-    <button onclick="incrementarContador()">Reclamar</button>
-  </div>
+  <input type="text" id="nomeJogador" placeholder="Nome do jogador">
+  <button onclick="adicionarJogador()">Adicionar Jogador</button>
+
+  <div id="listaJogadores"></div>
+
+  <div id="mvpAtual">Nenhum MVP ainda</div>
 
   <script>
-    let contador = 0;
-    let nome = '';
+    const jogadores = {};
 
-    document.getElementById('confirmarNome').onclick = () => {
-      const input = document.getElementById('nomeInput').value.trim();
-      if (input) {
-        nome = input;
-        document.getElementById('areaReclamacoes').style.display = 'block';
-        document.getElementById('nomeInput').style.display = 'none';
-        document.getElementById('confirmarNome').style.display = 'none';
-        atualizarContador();
+    function adicionarJogador() {
+      const nome = document.getElementById('nomeJogador').value.trim();
+      if (nome && !jogadores[nome]) {
+        jogadores[nome] = 0;
+        atualizarLista();
+        document.getElementById('nomeJogador').value = '';
       }
-    };
-
-    function incrementarContador() {
-      contador++;
-      atualizarContador();
     }
 
-    function atualizarContador() {
-      document.getElementById('contador').textContent =
-        `${nome} já reclamou ${contador} ${contador === 1 ? 'vez' : 'vezes'} hoje`;
+    function votar(nome) {
+      jogadores[nome]++;
+      atualizarLista();
+    }
+
+    function atualizarLista() {
+      const container = document.getElementById('listaJogadores');
+      container.innerHTML = '';
+
+      let mvp = '';
+      let maxVotos = -1;
+
+      for (const nome in jogadores) {
+        const votos = jogadores[nome];
+        const div = document.createElement('div');
+        div.className = 'jogador';
+        div.innerHTML = `
+          ${nome} - ${votos} voto${votos !== 1 ? 's' : ''}
+          <button onclick="votar('${nome}')">Votar</button>
+        `;
+        container.appendChild(div);
+
+        if (votos > maxVotos) {
+          maxVotos = votos;
+          mvp = nome;
+        }
+      }
+
+      if (mvp) {
+        document.getElementById('mvpAtual').textContent =
+          `MVP atual: ${mvp} com ${maxVotos} voto${maxVotos !== 1 ? 's' : ''}`;
+      } else {
+        document.getElementById('mvpAtual').textContent = 'Nenhum MVP ainda';
+      }
     }
   </script>
 
 </body>
 </html>
-
-
